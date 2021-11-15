@@ -212,7 +212,7 @@ class HybridHyperalignment():
         """
         debug.active += ['SHPAL', 'SLC']
 
-        mask_node_indices = np.concatenate(self.mask_node_indices)
+        mask_node_indices = self.mask_node_indices
         qe = self.queryengine
         nproc = self.nproc
         dtype = self.dtype
