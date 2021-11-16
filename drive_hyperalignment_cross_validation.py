@@ -10,14 +10,16 @@ import os, sys, itertools
 import numpy as np
 from scipy.sparse import load_npz, save_npz
 from mvpa2.base.hdf5 import h5save, h5load
+from mvpa2.misc.surfing.queryengine import SurfaceQueryEngine
+from mvpa2.algorithms.searchlight_hyperalignment import SearchlightHyperalignment
 from scipy.stats import zscore
 import HA_prep_functions as prep
 import hybrid_hyperalignment as h2a
 from benchmarks import searchlight_timepoint_clf, vertex_isc, dense_connectivity_profile_is, spatial_psf_isc, temporal_psf_isc
 
-os.environ['TMPDIR'] = '/dartfs-hpc/scratch/f002d44/temp'
-os.environ['TEMP'] = '/dartfs-hpc/scratch/f002d44/temp'
-os.environ['TMP'] = '/dartfs-hpc/scratch/f002d44/temp'
+os.environ['TMPDIR'] = '/dartfs-hpc/scratch/ps16421/temp'
+os.environ['TEMP'] = '/dartfs-hpc/scratch/ps16421/temp'
+os.environ['TMP'] = '/dartfs-hpc/scratch/ps16421/temp'
 N_LH_NODES_MASKED = 9372
 N_JOBS=16
 N_BLOCKS=128
@@ -39,7 +41,7 @@ def save_transformed_data(transformations, data, outdir):
 
     dss_lh,dss_rh=[],[]
     for T, d, sub in zip(transformations, data, utils.subjects):
-        aligned = np.nan_to_num(zscore((np.asmatrix(ds)*T).A, axis=0))
+        aligned = np.nan_to_num(zscore((np.asmatrix(d)*T.proj).A, axis=0))
         ar, al = aligned[:,N_LH_NODES_MASKED:], aligned[:,:N_LH_NODES_MASKED]
         dss_rh.append(ar)
         dss_lh.append(al)
@@ -75,7 +77,10 @@ def run_benchmarks(fold_basedir):
     lh_spsf = spatial_psf_isc(dss_lh, surface, dss_train)
     # temporal PSF
 
-
+def add_node_indices(dss_train):
+    for ds in dss_train:
+        ds.fa['node_indices'] = np.arange(ds.shape[1], dtype=int)
+    return dss_train
 
 # perform leave-one-run-out cross validation on hyperalignment training
 # this script
@@ -108,7 +113,8 @@ if __name__ == '__main__':
         print('training on runs {r}; testing on run {n}'.format(r=train, n=test))
 
         # separate testing and training data
-        dss_train = utils.get_train_data('b',train)
+        dss_train = utils.get_train_data('b', train)
+        dss_train = add_node_indices(dss_train)
         dss_test = utils.get_test_data('b', test)
 
         # get the node indices to run SL HA, both hemis
@@ -143,12 +149,13 @@ if __name__ == '__main__':
         # run hybrid hyperalignment
         elif ha_type == 'h2a':
             outdir = os.path.join(utils.h2a_dir, 'fold_{}/'.format(int(test[0])))
-            ha = h2a.HybridHyperalignment(ref_ds=data[0],
+            target_indices = prep.get_node_indices('b', surface_res=SPARSE_NODES)
+            ha = h2a.HybridHyperalignment(ref_ds=dss_train[0],
                              mask_node_indices=node_indices,
                              seed_indices=node_indices,
                              target_indices=target_indices,
                              target_radius=utils.HYPERALIGNMENT_RADIUS,
-                             surface=surf)
+                             surface=surface)
             Ts = ha(dss_train)
         else:
             print('first argument must be one of h2a, cha, rha')
@@ -156,7 +163,4 @@ if __name__ == '__main__':
 
         save_transformations(Ts, os.path.join(outdir, 'transformations'))
         save_transformed_data(Ts, dss_test, os.path.join(outdir,'data') )
-        run_benchmarks(ha_type, test[0], outdir)
-
-
-
+        # run_benchmarks(ha_type, test[0], outdir)

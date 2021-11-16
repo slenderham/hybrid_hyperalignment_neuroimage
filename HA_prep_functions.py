@@ -16,8 +16,15 @@ from mvpa2.measures.searchlight import Searchlight
 from mvpa2.measures.base import Measure
 from mvpa2.mappers.zscore import zscore
 import scipy.stats
+import budapest_utils as utils  # for now
 
-basedir = '/dartfs-hpc/scratch/ps16421/haxby_class'
+mode = 'local'
+if mode=='local':
+	basedir = '/Users/xxming/Documents/psyc164'
+elif mode=='remote':
+	basedir = '/dartfs/rc/lab/D/DBIC/DBIC/f002d44/h2a'
+
+TOT_NODES = 10242
 MASKS = {'l': np.load(os.path.join(basedir, 'fsaverage_lh_mask.npy')), 'r': np.load(os.path.join(basedir, 'fsaverage_rh_mask.npy'))}
 
 
@@ -74,12 +81,13 @@ def compute_connectomes(datasets, queryengine, target_indices):
     corresponding searchlight centered on each a connectivity seed and a connectivity target.
     """
 
-    conn_metric = lambda x,y: np.dot(x.samples, y.samples)/x.nsamples
+    conn_metric = lambda x,y: np.dot(x.samples.T, y.samples)/x.nsamples
     connectivity_mapper = FxyMapper(conn_metric)
     mean_feature_measure = MeanFeatureMeasure()
 
     # compute means for aligning seed features
-    conn_means = [seed_means(MeanFeatureMeasure(), queryengine, ds, target_indices) for ds in datasets]
+    target_indices = np.concatenate((target_indices[0], target_indices[1]))
+    conn_means = [compute_seed_means(MeanFeatureMeasure(), queryengine, ds, target_indices) for ds in datasets]
 
     conn_targets = []
     for csm in conn_means:
@@ -88,7 +96,7 @@ def compute_connectomes(datasets, queryengine, target_indices):
 
     connectomes = []
     for target, ds in zip(conn_targets, datasets):
-        conn_mapper.train(target)
+        connectivity_mapper.train(target)
         connectome = connectivity_mapper.forward(ds)
         connectome.fa = ds.fa
         zscore(connectome, chunks_attr=None)
@@ -170,7 +178,7 @@ def get_searchlights(hemi,radius):
     surf = get_freesurfer_surfaces(hemi)
     subj = utils.subjects[0]
     # get one run of one subject
-    ds = get_train_data(hemi, 1, num_subjects=1)[0]
+    ds = utils.get_train_data(hemi, 1, num_subjects=1)[0]
     ds.fa['node_indices'] = node_indices.copy()
     qe = SurfaceQueryEngine(surf, radius)
     qe.train(ds)
