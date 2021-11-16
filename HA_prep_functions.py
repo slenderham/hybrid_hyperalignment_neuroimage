@@ -17,7 +17,7 @@ from mvpa2.measures.base import Measure
 from mvpa2.mappers.zscore import zscore
 import scipy.stats
 
-basedir = '/dartfs/rc/lab/D/DBIC/DBIC/f002d44/h2a'
+basedir = '/dartfs-hpc/scratch/ps16421/haxby_class'
 MASKS = {'l': np.load(os.path.join(basedir, 'fsaverage_lh_mask.npy')), 'r': np.load(os.path.join(basedir, 'fsaverage_rh_mask.npy'))}
 
 

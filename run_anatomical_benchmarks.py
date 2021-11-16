@@ -17,12 +17,12 @@ if __name__ == '__main__':
 	else:
 		print('dataset must be one of [raiders, whiplash, budapest]')
 		sys.exit(2)
-	test_run = int(sys.argv[2])
+	run = int(sys.argv[2])
 	outdir = os.path.join(utils.basedir,'anatomical',dataset,'fold_{x}'.format(x=run))
 	if not os.path.isdir(outdir):
 		os.makedirs(outdir)
-	test_lh = utils.get_test_data('lh',[run])
-	test_rh = utils.get_test_data('rh',[run])
+	test_lh = utils.get_test_data('l',[run])
+	test_rh = utils.get_test_data('r',[run])
 	lh_res, rh_res = benchmarks.vertex_isc(test_lh), benchmarks.vertex_isc(test_rh)
 	np.save(outdir+'/vertex_isc_lh.npy', lh_res)
 	np.save(outdir+'/vertex_isc_rh.npy', rh_res)

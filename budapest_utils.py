@@ -7,13 +7,13 @@ from scipy.stats import zscore
 import os
 from mvpa2.datasets.base import Dataset
 
-basedir = '/dartfs/rc/lab/D/DBIC/DBIC/f002d44/h2a'
-home_dir = '/dartfs-hpc/rc/home/4/f002d44/h2a'
+basedir = '/dartfs-hpc/scratch/ps16421/haxby_class'
+home_dir = '/dartfs-hpc/scratch/ps16421/.michaelfolder'
 connhyper_dir = os.path.join(basedir, 'connhyper','budapest')
 resphyper_dir = os.path.join(basedir, 'response_hyper','budapest')
-h2a_dir = os.path.join(basedir, 'mixed_hyper','budapest')
-datadir = os.path.join(basedir, 'data','budapest')
-orig_datadir = os.path.join(datadir, 'original')
+h2a_dir = os.path.join(home_dir, 'mixed_hyper','budapest')
+datadir = os.path.join(basedir, 'budapest')
+orig_datadir = datadir
 connectome_dir = os.path.join(datadir, 'connectomes')
 results_dir = os.path.join(basedir, 'results','budapest')
 iterative_HA_dir = os.path.join(basedir, 'iterative_hyper')
